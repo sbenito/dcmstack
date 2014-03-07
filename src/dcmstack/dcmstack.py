@@ -402,6 +402,9 @@ class DicomStack(object):
     meta_filter : callable
         A callable that takes a meta data key and value, and returns True if 
         that meta data element should be excluded from the DcmMeta extension.
+
+   dcm_cmp : callable
+        Comparator function used to order the dicoms
         
     Notes
     -----
@@ -437,7 +440,8 @@ class DicomStack(object):
     the source DICOM files.'''
     
     def __init__(self, time_order=None, vector_order=None, 
-                 allow_dummies=False, meta_filter=None):
+                 allow_dummies=False, meta_filter=None,
+                 dcm_cmp=None):
         if isinstance(time_order, str):
             self._time_order = DicomOrdering(time_order)
         else:
@@ -453,6 +457,7 @@ class DicomStack(object):
             self._meta_filter = meta_filter
         
         self._allow_dummies = allow_dummies
+        self._dcm_cmp = dcm_cmp
         
         #Sets all the state variables to their defaults
         self.clear()
@@ -593,7 +598,7 @@ class DicomStack(object):
     def _chk_order(self, slice_positions, files_per_vol, num_volumes, 
                    num_time_points, num_vec_comps):
         #Sort the files
-        self._files_info.sort(key=lambda x: x[1])
+        self._files_info.sort(key=lambda x: x[1], cmp=self._dcm_cmp)
         if files_per_vol > 1:
             for vol_idx in range(num_volumes):
                 start_slice = vol_idx * files_per_vol
